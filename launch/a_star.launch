@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<launch>
+    <param name="use_sim_time" value="true"/>
+
+    <node pkg="stage_ros" type="stageros" name="stageros" args="-d $(find MotionPlanner_RRT_Astar)/worlds/a_star.world"/>
+
+
+    <arg name="map_file" default="$(find MotionPlanner_RRT_Astar)/maps/rrt.yaml" />
+    <node pkg="map_server" type="map_server" name="map_server" args="$(arg map_file)" />
+
+    <node pkg="tf"
+        type="static_transform_publisher"
+        name="link1_broadcaster"
+        args="1 0 0 0 0 0 map odom 100" />
+
+
+    <node pkg="MotionPlanner_RRT_Astar" type="a_star.py" name="A_star" output="screen"/>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find MotionPlanner_RRT_Astar)/rviz/rrt_config.rviz"/>
+
+
+
+
+</launch>
