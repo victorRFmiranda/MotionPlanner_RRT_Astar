@@ -165,8 +165,35 @@ class RRTStar:
 
 	# get final path
 	def final_path(self, goal_ind):
-		path = [[self.end_point.x, self.end_point.y]]
 		node = self.node_list[goal_ind]
+		path = []	
+
+		# Compute a smooth path to the final node
+		xr=[]
+		yr=[]
+		thetar=[]
+		for j in self.uW:
+			(x,y,theta)=self.trajectory(node.x,node.y,node.theta,j)
+			xr.append(x)
+			yr.append(y)
+			thetar.append(theta)
+		dmin = dist([self.end_point.x,self.end_point.y],[xr[0][-1],yr[0][-1]])
+		near = 0
+		for i in range(1,len(xr)):
+			d = dist([self.end_point.x,self.end_point.y],[xr[i][-1],yr[i][-1]])
+			if d < dmin:
+				dmin= d
+				near = i
+		self.end_point.path_x = xr[near]
+		self.end_point.path_y = yr[near]
+
+		N = len(self.end_point.path_x) - 1
+		while N >=0:
+			path.append([self.end_point.path_x[N],self.end_point.path_y[N]])
+			N -=1
+
+
+		# Compute the paths to the others nodes.
 		while node.parent is not None:
 			n = len(node.path_x) - 1
 			while n >=0:
@@ -526,7 +553,7 @@ def run():
 
 		if goal and flag_start==True:
 			obstacle_list = compute_obstacles(width,height,resol,origem_map,occ_map)
-			
+
 			flag_start = False
 
 			rrt_path = RRTStar(start=start,goal=goal,map_size=[origem_map,size],obstacle_list=obstacle_list,max_iter=max_samples,step_size = 1.0, dt=0.2)
