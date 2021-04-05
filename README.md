@@ -47,7 +47,7 @@ In case of the RRT*:
 The command line above will run the ROS Stage simulator in a predefined scenario, and the respective occupancy map will start to publish.
 
 At this moment two windows will open: The simulator and the Rviz, which shows the environment map and the robot's pose.
-![Rviz Visualization](https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example1.png =250x)
+![Rviz Visualization](https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example1.png =250x250)
 
 The planning algorithm will wait for a goal position. The user can select this position by using the **Publish Point** tool in rviz and clicking on the desired point.
 ![Publish Goal Point](https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example2.png)
