@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+########################################
+'''               RRT               '''
+########################################
+'''
+@author: Victor R. F. Miranda
+@institute: Universidade Federal de Minas Gerais (UFMG)
+@contact: victormrfm@ufmg.br
+@course: PhD in Electrical Engineering
+'''
 import rospy
 import rospkg
 from tf.transformations import euler_from_quaternion
