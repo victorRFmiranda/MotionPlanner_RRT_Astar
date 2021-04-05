@@ -510,7 +510,7 @@ def run():
 	goal = np.array([])
 	size = [0.0,0.0]
 	origem_map = [0.0,0.0]
-	max_samples = 2000
+	max_samples = 10000
 	width = 0
 	height = 0
 	resol = 0
