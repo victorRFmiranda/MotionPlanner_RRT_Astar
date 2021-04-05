@@ -56,7 +56,7 @@ The planning algorithm will wait for a goal position. The user can select this p
 
 Then, the path will be planned and an image appears with a plot of the computed route.
 
-<img src="https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example3.png" width="350" height="350">
+<img src="https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example3.png" width="400" height="250">
 
 When this image is closed, the robot will start to follow the path until reaching the end of the path.
 
