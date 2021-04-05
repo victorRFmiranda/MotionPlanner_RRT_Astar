@@ -50,8 +50,10 @@ At this moment two windows will open: The simulator and the Rviz, which shows th
 ![Rviz Visualization](https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example1.png)
 
 The planning algorithm will wait for a goal position. The user can select this position by using the **Publish Point** tool in rviz and clicking on the desired point.
+![Publish Goal Point](https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example2.png)
 
 Then, the path will be planned and an image appears with a plot of the computed route.
+![Planned Path](https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example3.png)
 
 When this image is closed, the robot will start to follow the path until reaching the end of the path.
 
