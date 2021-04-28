@@ -50,7 +50,7 @@ class RRTStar:
 			self.parent = None
 			self.cost = 0.0
 
-	def __init__(self, start, goal, obstacle_list, map_size, step_size=0.5, dt=0.2, max_iter=500, connect_circle_dist=10.0, search_until_max_iter=False):
+	def __init__(self, start, goal, resol_map, occupancy_map, obstacle_list, map_size, step_size=0.5, dt=0.2, max_iter=500, connect_circle_dist=10.0, search_until_max_iter=False):
 		self.start = self.Node(start[0], start[1], start[2])
 		self.end_point = self.Node(goal[0], goal[1], 0.0)
 		self.min_x = map_size[0][0]
@@ -62,6 +62,8 @@ class RRTStar:
 		self.dt = dt
 		self.max_iter = max_iter
 		self.obstacle_list = obstacle_list
+		self.occ_map = occupancy_map
+		self.resol_map = resol_map
 		self.node_list = []
 
 		self.connect_circle_dist = connect_circle_dist
@@ -106,7 +108,7 @@ class RRTStar:
 			near_inds = self.find_near_nodes(q_new)
 			node_with_updated_parent = self.choose_parent(q_new, near_inds)
 			if node_with_updated_parent:
-				self.rewire(node_with_updated_parent, near_inds)
+				# self.rewire(node_with_updated_parent, near_inds)
 				self.node_list.append(node_with_updated_parent)
 			else:
 				self.node_list.append(q_new)
@@ -298,18 +300,15 @@ class RRTStar:
 				self.propagate_cost_to_leaves(node)
 
 
-	# def get_random(self):
-	# 	rnd = self.Node(random.uniform(self.min_rand, self.max_rand), random.uniform(self.min_rand, self.max_rand), random.uniform (0, pi))
-	# 	return rnd
-
 	def get_random(self):
+		rnd = self.Node(random.uniform(self.min_x, self.max_x), random.uniform(self.min_y, self.max_y), random.uniform (0, pi))
 		r = dist([self.end_point.x,self.end_point.y],[self.start.x,self.start.y])
-		# c = r/2.0
-		# rnd = self.Node(random.uniform(self.min_x, self.max_x), random.uniform(self.min_y, self.max_y), random.uniform (0, pi))
-		rnd = self.Node(random.uniform(self.start.x, self.end_point.x), random.uniform(self.start.y, self.end_point.y), random.uniform (0, pi))
+		# rnd = self.Node(random.uniform(self.start.x, self.end_point.x), random.uniform(self.start.y, self.end_point.y), random.uniform (0, pi))
 		d = dist([self.end_point.x,self.end_point.y],[rnd.x,rnd.y])
 		while (self.check_collision(rnd) == False and d < r/3.0):
-			rnd = self.Node(random.uniform(self.start.x, self.end_point.x), random.uniform(self.start.y, self.end_point.y), random.uniform (0, pi))
+		# while (self.check_collision(rnd) == False):
+			rnd = self.Node(random.uniform(self.min_x, self.max_x), random.uniform(self.min_y, self.max_y), random.uniform (0, pi))
+			# rnd = self.Node(random.uniform(self.start.x, self.end_point.x), random.uniform(self.start.y, self.end_point.y), random.uniform (0, pi))
 			d = dist([self.end_point.x,self.end_point.y],[rnd.x,rnd.y])
 		return rnd
 
@@ -321,34 +320,37 @@ class RRTStar:
 
 
 	def check_collision(self, q):
-		obstacleList = self.obstacle_list
+		occ_map = self.occ_map.data
+		width = self.occ_map.info.width
 
 		if q is None:
 			return False
 
-		d_list = []
+		w_list = []
+		h_list = []
 
 		if (q.path_x):
-			for (cx, cy, size) in obstacleList:
-				dx_list = [cx - x for x in q.path_x]
-				dy_list = [cy - y for y in q.path_y]
-				d_list = [dx * dx + dy * dy for (dx, dy) in zip(dx_list, dy_list)]
-
-				if min(d_list) <= 4*size:
-					return False  # collision
+			w_list = np.array([(x - self.min_x - self.resol_map/2.0)/self.resol_map for x in q.path_x])
+			h_list = np.array([(y - self.min_y - self.resol_map/2.0)/self.resol_map for y in q.path_y])
+			w_list = np.concatenate((w_list,w_list-3*self.resol_map),axis=0)
+			w_list = np.concatenate((w_list,w_list+3*self.resol_map),axis=0)
+			h_list = np.concatenate((h_list,h_list-3*self.resol_map),axis=0)
+			h_list = np.concatenate((h_list,h_list+3*self.resol_map),axis=0)
+			w_list = np.around(w_list).astype(int)
+			h_list = np.around(h_list).astype(int)
+			# print(len(w_list))
+			for (w,h) in zip(w_list,h_list):
+				if (occ_map[h*width + w] != 0):
+					return False
 		else:
-			for (cx, cy, sizes) in obstacleList:
-				dx = cx - q.x
-				dy = cy - q.y
-				d_list.append((dx*dx + dy*dy)**0.5)
-				# d_list = [dx * dx + dy * dy for (dx, dy) in zip(dx_list, dy_list)]
-
-			# print(min(d_list))
-			if min(d_list) <= 0.5:
+			w = int(round( (q.x - self.min_x - self.resol_map/2.0)/self.resol_map ))
+			h = int(round( (q.y - self.min_y - self.resol_map/2.0)/self.resol_map ))
+			if(occ_map[h*width + w] != 0):
 				return False 
 
 
 		return True  # safe
+		
 
 	# Draw RRT
 	def draw_graph(self):
@@ -503,7 +505,7 @@ def compute_obstacles(width,height,resol,origem_map,msg):
 '''           Main Routine          '''
 ########################################
 def run():
-	global robot_states, goal, size, origem_map, width, height, resol
+	global robot_states, goal, size, origem_map, width, height, resol, occ_map
 
 	# states - x,y, theta
 	robot_states = [0.0, 0.0, 0.0]
@@ -511,6 +513,7 @@ def run():
 	size = [0.0,0.0]
 	origem_map = [0.0,0.0]
 	max_samples = 10000
+	occ_map = OccupancyGrid()
 	width = 0
 	height = 0
 	resol = 0
@@ -556,13 +559,17 @@ def run():
 
 			flag_start = False
 
-			rrt_path = RRTStar(start=start,goal=goal,map_size=[origem_map,size],obstacle_list=obstacle_list,max_iter=max_samples,step_size = 1.0, dt=0.2)
+			# rrt_path = RRTStar(start=start,goal=goal,map_size=[origem_map,size],obstacle_list=obstacle_list,max_iter=max_samples,step_size = 1.0, dt=0.2)
+			rrt_path = RRTStar(start=start,goal=goal,map_size=[origem_map,size],resol_map = resol, occupancy_map = occ_map, obstacle_list=obstacle_list,max_iter=max_samples,step_size = 4.0, dt=0.8)
 
 			print("Planning")
 			path = rrt_path.planning()
 
+
 			if path is None:
 				print("Cannot find path")
+				rrt_path.draw_graph()
+				plt.show()
 			else:
 				print("found path!!")
 
