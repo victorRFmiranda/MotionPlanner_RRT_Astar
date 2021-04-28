@@ -48,9 +48,15 @@ The command line above will run the ROS Stage simulator in a predefined scenario
 
 At this moment two windows will open: The simulator and the Rviz, which shows the environment map and the robot's pose.
 
+<img src="https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example1.png" width="500" height="300">
+
 The planning algorithm will wait for a goal position. The user can select this position by using the **Publish Point** tool in rviz and clicking on the desired point.
 
+<img src="https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example2.png" width="350" height="350">
+
 Then, the path will be planned and an image appears with a plot of the computed route.
+
+<img src="https://github.com/victorRFmiranda/MotionPlanner_RRT_Astar/blob/main/images/RRT_example3.png" width="400" height="250">
 
 When this image is closed, the robot will start to follow the path until reaching the end of the path.
 
