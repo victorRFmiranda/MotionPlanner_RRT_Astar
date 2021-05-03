@@ -332,16 +332,14 @@ class RRTStar:
 		if (q.path_x):
 			w_list = np.array([(x - self.min_x - self.resol_map/2.0)/self.resol_map for x in q.path_x])
 			h_list = np.array([(y - self.min_y - self.resol_map/2.0)/self.resol_map for y in q.path_y])
-			w_list = np.concatenate((w_list,w_list-3*self.resol_map),axis=0)
-			w_list = np.concatenate((w_list,w_list+3*self.resol_map),axis=0)
-			h_list = np.concatenate((h_list,h_list-3*self.resol_map),axis=0)
-			h_list = np.concatenate((h_list,h_list+3*self.resol_map),axis=0)
 			w_list = np.around(w_list).astype(int)
 			h_list = np.around(h_list).astype(int)
-			# print(len(w_list))
 			for (w,h) in zip(w_list,h_list):
-				if (occ_map[h*width + w] != 0):
-					return False
+				# Check Safe distance
+				for i in range(-4,5,1):
+					for j in range(-4,5,1):
+						if (occ_map[(h+i)*width + (w+j)] != 0):
+							return False
 		else:
 			w = int(round( (q.x - self.min_x - self.resol_map/2.0)/self.resol_map ))
 			h = int(round( (q.y - self.min_y - self.resol_map/2.0)/self.resol_map ))
