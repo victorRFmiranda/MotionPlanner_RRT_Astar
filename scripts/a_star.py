@@ -21,6 +21,7 @@ from geometry_msgs.msg import Twist, PointStamped, PoseStamped
 import matplotlib.image as img
 import numpy as np
 import math
+import time
 
 
 
@@ -59,6 +60,7 @@ def Astar(maze, start, target):
 
     # Loop until find the end
     while len(open_list) > 0:
+
 
         # Get the current node
         current_node = open_list[0]
@@ -104,6 +106,7 @@ def Astar(maze, start, target):
 
         # Loop through children
         for child in children:
+
 
             # Child is on the closed list
             for closed_child in closed_list:
@@ -167,15 +170,20 @@ def callback_pose(data):
 
 
 def callback_goalPoint(data):
-    global goal
-    goal = (int(round((data.point.x+50)/0.025)),int(round((data.point.y+50)/0.025)))
-    # goal.append([data.point.x, data.point.y])
-    # (goal[0],goal[1]) = [data.point.x, data.point.y]
-    # print(goal)
+    global goal_cb
+    goal_cb = [data.point.x,data.point.y]
+    # goal = (int(round((data.point.x+50)/0.025)),int(round((data.point.y+50)/0.025)))
 
 
 def callback_map(msg):
-    global mapa
+    global mapa, resol, size, width, height, origem_map
+    resol = msg.info.resolution
+    width = msg.info.width
+    height = msg.info.height
+    origem_map = [msg.info.origin.position.x,msg.info.origin.position.y]
+    size = [origem_map[0]+(msg.info.width * resol),origem_map[1]+(msg.info.height * resol)]
+
+
     mapa = np.asarray(msg.data, dtype=np.int8).reshape(msg.info.height, msg.info.width)
     mapa = np.where(mapa==-1,1,0)
     # mapa = data.data
@@ -193,8 +201,8 @@ def dist(p1,p2):
 ########################################
 class control:
     def __init__(self):
-        self.d = 0.2
-        self.k = 5
+        self.d = 0.1
+        self.k = 2
 
     def control_(self,pos_curve, robot_states):
 
@@ -223,7 +231,7 @@ def new_path(traj, pub):
 
     for i in range(len(traj[0])):
         pose = PoseStamped()
-        pose.header.frame_id = "/odom"
+        pose.header.frame_id = "/map"
         pose.header.stamp = rospy.Time.now()
 
         pose.pose.position.x = traj[0][i]
@@ -232,7 +240,7 @@ def new_path(traj, pub):
 
         path.poses.append(pose)
 
-    path.header.frame_id = "/odom"
+    path.header.frame_id = "/map"
     path.header.stamp = rospy.Time.now()
     pub.publish(path)
 
@@ -247,7 +255,7 @@ def map(map_name):
     path = rospack.get_path('MotionPlanner_RRT_Astar')
     image_path = path + '/worlds/' + map_name
     image = img.imread(image_path)
-    image.setflags(write=1)
+    #image.setflags(write=1)
 
     M = np.zeros((len(image),len(image)))
     for i in range(len(image)):
@@ -264,7 +272,7 @@ def map(map_name):
 '''           Main Function          '''
 ########################################
 def run():
-    global robot_states, goal, mapa
+    global robot_states, goal, goal_cb, mapa, resol, size, width, height, origem_map
 
     # states - x,y, theta
     robot_states = [0.0, 0.0, 0.0]
@@ -274,7 +282,7 @@ def run():
     controlador = control()
 
     ## ROS STUFFS
-    rospy.init_node("rrt", anonymous=True)
+    rospy.init_node("AStar", anonymous=True)
 
     # Publishers
     pub_cmd_vel = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
@@ -289,6 +297,12 @@ def run():
     rate = rospy.Rate(5)
 
     ####### Get Map
+    resol = 0
+    size = [0,0]
+    width = 0
+    height = 0
+    origem_map = [0,0]
+    goal_cb = []
     mapa = []
     M = map('map_obstacle2.bmp')
 
@@ -301,17 +315,32 @@ def run():
     # planner = rrt(start, goal, max_samples)
     s = []
 
+    time.sleep(1)
+
     while not rospy.is_shutdown():
-        start = (int(round((robot_states[0]+50)/0.025)),int(round((robot_states[1]+50)/0.025)))
-        if goal:
+        # start = (int(round((robot_states[0]+50)/0.025)),int(round((robot_states[1]+50)/0.025)))
+        start = (int(round((robot_states[0]-origem_map[0]-resol/2.0)/resol)),int(round((robot_states[1]-origem_map[1]-resol/2.0)/resol)))
+        # start = (int(round((-robot_states[1]*resol)+size[1])),int(round((robot_states[0]*resol)+size[0])))
+        # print("resol",resol)
+        # print("width",width)
+        # print("height",height)
+        # print("size",size)
+        # print("origem",origem_map)
+        print("Start=",start)
+        if goal_cb:
+            goal = (int(round((goal_cb[0]-origem_map[0]-resol/2.0)/resol)),int(round((goal_cb[1]-origem_map[1]-resol/2.0)/resol)))
+            print("goal=",goal)
             print("computing map")
             path = Astar(mapa, start, goal)
+
             vec_path = np.zeros((len(path),2))
             for i in range(len(path)):
                 s = list(path[i])
                 vec_path[i,:] = list(path[i])
-                vec_path[i,0] = vec_path[i,0]*0.025 - 50
-                vec_path[i,1] = vec_path[i,1]*0.025 - 50
+                # vec_path[i,0] = vec_path[i,0]*0.025 - 50
+                # vec_path[i,1] = vec_path[i,1]*0.025 - 50
+                vec_path[i,0] = origem_map[0] + (vec_path[i,0]*resol + resol/2.0)
+                vec_path[i,1] = origem_map[1] + (vec_path[i,1]*resol + resol/2.0)
 
             t_x = []
             t_y = []
@@ -320,13 +349,15 @@ def run():
 
             new_path([t_x,t_y],pub_path)
 
+            print(path)
+
             goal = []
 
             # Controle
             for i in range(len(t_x)):
                 t_init = rospy.get_time()
                 D = 1000
-                while(D > 0.1 and not rospy.is_shutdown()):
+                while(D > 0.2 and not rospy.is_shutdown()):
                     # D = math.sqrt((t_y[i]-robot_states[1])**2+(t_x[i]-robot_states[0])**2)
                     D = dist([t_x[i],t_y[i]],[robot_states[0],robot_states[1]])
                     t = rospy.get_time() - t_init
@@ -336,8 +367,8 @@ def run():
                     vel_msg.linear.x, vel_msg.angular.z = controlador.control_([t_x[i],t_y[i]],robot_states)
                     pub_cmd_vel.publish(vel_msg)
 
-        else:
-            print("wainting goal")
+        # else:
+        #     print("wainting goal")
     	# print("Robot pose: x = %f, y = %f, yaw = %f\n" % (robot_states[0],robot_states[1],robot_states[2]))
     	rate.sleep()
 
