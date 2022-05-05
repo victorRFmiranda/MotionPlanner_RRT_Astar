@@ -76,7 +76,7 @@ class RRTStar:
 	def planning(self):
 		self.node_list = [self.start]
 		for i in range(self.max_iter):
-			print "Iter:", i, ", number of nodes:", len(self.node_list)
+			print("Iter:", i, ", number of nodes:", len(self.node_list))
 			q_rnd = self.get_random()
 			q_new = self.extend_rrt(q_rnd)
 

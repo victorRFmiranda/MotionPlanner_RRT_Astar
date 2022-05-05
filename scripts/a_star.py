@@ -369,8 +369,8 @@ def run():
 
         # else:
         #     print("wainting goal")
-    	# print("Robot pose: x = %f, y = %f, yaw = %f\n" % (robot_states[0],robot_states[1],robot_states[2]))
-    	rate.sleep()
+        # print("Robot pose: x = %f, y = %f, yaw = %f\n" % (robot_states[0],robot_states[1],robot_states[2]))
+        rate.sleep()
 
 
 
